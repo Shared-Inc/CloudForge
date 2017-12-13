@@ -1,0 +1,46 @@
+{
+  "name": "cloudforge",
+  "version": "1.0.0",
+  "description": "CloudForge is a super simple, lightweight HTML templating engine built on doT.js with reusable component support, build output minification and lightning fast Sass compilation. It also provides tools to quickly deploy your website to AWS' S3 and CloudFront.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fanapptic/cloudforge.git"
+  },
+  "keywords": [
+    "templates",
+    "template",
+    "engine",
+    "s3",
+    "cloudfront",
+    "static",
+    "website",
+    "hosting",
+    "cloud",
+    "amazon",
+    "aws",
+    "templating",
+    "sass",
+    "minifier",
+    "web",
+    "html"
+  ],
+  "author": "Braydon Batungbacal <braydon@fanapptic.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Fanapptic/cloudforge/issues"
+  },
+  "homepage": "https://github.com/Fanapptic/cloudforge#readme",
+  "dependencies": {
+    "aws-sdk": "^2.169.0",
+    "directory-tree": "^2.0.0",
+    "dot": "^1.1.2",
+    "live-server": "^1.2.0",
+    "mkdirp": "^0.5.1",
+    "ncp": "^2.0.0",
+    "node-sass": "^4.7.2"
+  }
+}
