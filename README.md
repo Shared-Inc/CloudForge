@@ -8,7 +8,7 @@ CloudForge is supported and maintained by <a href="https://www.fanapptic.com" ta
 
 ## Installation
 
-This is a <a href="https://nodejs.org/en/">Node.js</a> module available through the <a href="https://www.npmjs.com/">npm registry</a>
+This is a <a href="https://nodejs.org/en/">Node.js</a> module available through the <a href="https://www.npmjs.com/">npm registry</a>.
 
 Before install, <a href="https://nodejs.org/en/download/">download and install Node.js</a>. The latest stable version of Node.js is recommended.
 
@@ -20,8 +20,8 @@ npm install cloudforge
 
   * Easily reuse markup across HTML files with CloudForge components.
   * Built on the lightning fast doT.js templating engine.
-  * Sass compilation using the fastest available compiler - LibSass
-  * Rapidly deploy your HTML, CSS and other dependency files to an S3 bucket, and easily invalidate a CloudFront distribution.
+  * Sass compilation using the fastest available compiler - LibSass.
+  * Rapidly deploy your HTML, CSS and other dependency files to an S3 bucket, and easily invalidate all objects for a CloudFront distribution.
   * Develop quickly with built in live-server and directory watch support with auto browser refresh support when any changes are made.
 
 ## Usage
@@ -81,13 +81,13 @@ The CloudForge class has a handful of options you can include when constructing 
   * Type: `String`
   * Default: `null`
 
-Required only for authentication if deploying to S3 / invalidating a CloudFront distribution.
+Required only for authentication if deploying to S3 / invalidating objects of a CloudFront distribution.
 
 ### awsSecretAccessKey
   * Type: `String`
   * Default: `null`
  
-Required only for authentication if deploying to S3 / invalidating a CloudFront distribution.
+Required only for authentication if deploying to S3 / invalidating a objects of a CloudFront distribution.
 
 ### awsS3Bucket
   * Type: `String`
