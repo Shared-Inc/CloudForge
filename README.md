@@ -193,6 +193,10 @@ There are no unusual conventions associated with CloudForge and Sass. Also note,
 
 Also, as expected, all compiled sass output will have the extension `.css`.
     
+## Deploying
+
+Deploying is extremely fast and easy. Create a CloudForge instance, making sure to include the `awsAccessKeyId`, `awsSecretAccessKey`, `awsS3Bucket` and optionally the `awsCloudFrontDistributionId` as options properties. Set your `html`, `sass` and/or `dependencies` properties as necessary for your use case. Then call the `deploy()` method of your cloudForge instance. Wallah! If all goes well, the contents in your build directories will be uploaded to S3. If you provided  `awsCloudFrontDistributionId`, all objects associated with that CloudFront distribution ID will be invalidated, and the latest ones in the attached S3 bucket will be cached by CloudFront.
+    
 ## Support
 
 If you have any issues, feature requests or complaints, please <a href="https://github.com/Fanapptic/cloudforge/issues/new">open a new issue</a>. We'll do our best to quickly respond.
