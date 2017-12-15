@@ -45,6 +45,7 @@
     "node-sass": "^4.7.2",
     "nodemon": "^1.12.7",
     "rimraf": "^2.6.2",
+    "s3": "^4.4.0",
     "util.promisify": "^1.0.0"
   }
 }

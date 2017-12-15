@@ -4,14 +4,17 @@
 
 const fs = require('fs');
 const path = require('path');
-const Joi = require('joi');
-const promisify = require('util.promisify');
+
+const aws = require('aws-sdk');
 const directoryTree = require('directory-tree');
-const sass = require('node-sass');
+const dot = require('dot');
+const Joi = require('joi');
 const mkdirp = require('mkdirp');
 const ncp = promisify(require('ncp'));
-const dot = require('dot');
+const promisify = require('util.promisify');
 const rimraf = promisify(require('rimraf'));
+const s3Helper = require('s3');
+const sass = require('node-sass');
 
 /*
  * Set templating engine format
@@ -38,18 +41,18 @@ class CloudForge {
       awsS3Bucket: Joi.string().optional(),
       awsCloudFrontDistributionId: Joi.string().optional(),
       html: Joi.object({
-        srcPath: Joi.string().required(),
-        buildPath: Joi.string().required(),
-        components: Joi.object().optional(),
-        componentDependencies: Joi.object().optional(),
-        outputStyle: Joi.string().valid('nested', 'expanded', 'compact', 'compressed').optional(),
-      }).required(),
+        sourceDirectory: Joi.string().required(),
+        buildDirectory: Joi.string().required(),
+        componentsDirectory: Joi.string().optional(),
+        templateDependencies: Joi.object().optional(),
+      }).optional(),
       sass: Joi.object({
-        srcPath: Joi.string().required(),
-        buildPath: Joi.string().required(),
+        sourceDirectory: Joi.string().required(),
+        buildDirectory: Joi.string().required(),
         includeSourceMap: Joi.boolean().optional(),
-      }), // [ [srcPath, buildPath] ]
-      dependencies: Joi.array().items(Joi.array().items(Joi.string()).min(2).max(2)).optional(), // [ [srcPath, buildPath, includeMap] ]
+        outputStyle: Joi.string().valid('nested', 'expanded', 'compact', 'compressed').optional(),
+      }).optional(), // [ [sourceDirectory, buildDirectory] ]
+      dependencies: Joi.array().items(Joi.array().items(Joi.string()).min(2).max(2)).optional(), // [ [sourceDirectory, buildDirectory, includeMap] ]
     }));
 
     Object.assign(this, options);
@@ -85,10 +88,10 @@ class CloudForge {
 
     let promises = [];
 
-    promises.push(rimraf(this.html.buildPath));
+    promises.push(rimraf(this.html.buildDirectory));
 
     if (this.sass) {
-      promises.push(rimraf(this.sass.buildPath));
+      promises.push(rimraf(this.sass.buildDirectory));
     }
 
     if (this.dependencies) {
@@ -105,10 +108,10 @@ class CloudForge {
   /*
    * compileHtml()
    * --
-   * Recurses file and directories in this.html.srcPath
+   * Recurses file and directories in this.html.sourceDirectory
    * and renders all files, templates and
    * components into their respective files
-   * in this.html.buildPath.
+   * in this.html.buildDirectory.
    * --
    * Returns a promise.
    */
@@ -116,10 +119,27 @@ class CloudForge {
   compileHtml() {
     cloudForgeLog('Compiling HTML...');
 
+    if (!this.html) {
+      return Promise.reject('Could not compile HTML! The html property has not been set!');
+    }
+
     let templates = {};
+    let components = {};
+
+    // Get components
+    if (this.html.componentsDirectory) {
+      fs.readdirSync(this.html.componentsDirectory).filter(directoryItem => {
+        return path.extname(directoryItem) === '.dot';
+      }).forEach(componentFile => {
+        const componentName = componentFile.split('.')[0];
+        const componentTemplate = fs.readFileSync(`${this.html.componentsDirectory}/${componentFile}`);
+
+        components[componentName] = dot.template(componentTemplate);
+      });
+    }
 
     const recurse = directory => {
-      // Store template for current working directory.
+      // Get template for current working directory, if any.
       directory.children.forEach(child => {
         if (child.extension === '.dot') {
           templates[directory.path] = dot.template(fs.readFileSync(child.path).toString());
@@ -144,13 +164,14 @@ class CloudForge {
       // Compile HTML files.
       directory.children.forEach(child => {
         if (child.extension === '.html') {
-          const writePath = path.join(this.html.buildPath, child.path.replace(this.html.srcPath, ''));
-          const metadataPath = path.join(directory.path, 'metadata.json');
+          const writePath = path.join(this.html.buildDirectory, child.path.replace(this.html.sourceDirectory, ''));
           const childTemplate = dot.template(fs.readFileSync(child.path));
+          const metadataPath = path.join(directory.path, 'metadata.json');
+          const metadata = (fs.existsSync(metadataPath)) ? JSON.parse(fs.readFileSync(metadataPath).toString()) : {};
           const packagedComponents = Object.assign({
-            components: this.html.components,
-            metadata: (fs.existsSync(metadataPath)) ? JSON.parse(fs.readFileSync(metadataPath).toString()) : {},
-          }, this.html.componentDependencies);
+            components,
+            metadata,
+          }, this.html.templateDependencies);
 
           mkdirp.sync(path.dirname(writePath));
 
@@ -168,7 +189,7 @@ class CloudForge {
     // Recursively compile.
     return new Promise((resolve, reject) => {
       try {
-        recurse(directoryTree(this.html.srcPath, {
+        recurse(directoryTree(this.html.sourceDirectory, {
           exclude: /.DS_Store/,
         }));
       } catch(error) {
@@ -185,9 +206,9 @@ class CloudForge {
    * compileSass()
    * --
    * Recurses files and directories in
-   * this.sass.srcPath and renders all .sass
+   * this.sass.sourceDirectory and renders all .sass
    * and .scss files into their respective
-   * build files in this.sass.buildPath.
+   * build files in this.sass.buildDirectory.
    * --
    * Returns a promise.
    */
@@ -195,14 +216,18 @@ class CloudForge {
   compileSass() {
     cloudForgeLog('Compiling Sass...');
 
+    if (!this.sass) {
+      return Promise.reject('Could not compile Sass! The sass property has not been set!');
+    }
+
     const recurse = directory => {
       // Recurse & compile Sass files.
       directory.children.forEach(child => {
         if (child.name.charAt(0) !== '_' && (child.extension === '.sass' || child.extension === '.scss')) {
-          const writePath = path.join(this.sass.buildPath, child.path.replace(this.sass.srcPath, '')).slice(0, -5) + '.css';
+          const writePath = path.join(this.sass.buildDirectory, child.path.replace(this.sass.sourceDirectory, '')).slice(0, -5) + '.css';
           const result = sass.renderSync({
             file: child.path,
-            outFile: writePath.replace(this.sass.buildPath, ''),
+            outFile: writePath.replace(this.sass.buildDirectory, ''),
             sourceMap: this.sass.includeSourceMap || false,
             outputStyle: this.sass.outputStyle || 'nested',
           });
@@ -224,7 +249,7 @@ class CloudForge {
 
     return new Promise((resolve, reject) => {
       try {
-        recurse(directoryTree(this.sass.srcPath, {
+        recurse(directoryTree(this.sass.sourceDirectory, {
           exclude: /.DS_Store/,
         }));
       } catch (error) {
@@ -252,17 +277,17 @@ class CloudForge {
     cloudForgeLog('Copying Dependencies...');
 
     if (!this.dependencies) {
-      return;
+      return Promise.reject('Could not copy dependencies! The dependencies property has not been set!');
     }
 
     let promises = [];
 
     this.dependencies.forEach(instructions => {
-      const srcPath = instructions[0];
-      const buildPath = instructions[1];
+      const sourceDirectory = instructions[0];
+      const buildDirectory = instructions[1];
 
-      mkdirp.sync(path.dirname(buildPath));
-      promises.push(ncp(srcPath, buildPath));
+      mkdirp.sync(path.dirname(buildDirectory));
+      promises.push(ncp(sourceDirectory, buildDirectory));
     });
 
     return Promise.all(promises).then(() => {
@@ -273,13 +298,76 @@ class CloudForge {
   /*
    * deploy()
    * --
-   * TODO:
+   * Runs built(), then uploads all contents
+   * of the build directories to the specified
+   * S3 bucket specified with awsS3Bucket.
+   * If awsCloudFrontDistributionId was provided,
+   * all objects of it will be invalidated after
+   * uploading to S3.
    * --
    * Returns a promise.
    */
 
   deploy() {
+    cloudForgeLog('Deploying to S3...');
 
+    if (!this.awsAccessKeyId || !this.awsSecretAccessKey || !this.awsS3Bucket) {
+      return Promise.reject('Could not deploy! The awsAccessKeyId, awsSecretAccessKey or awsS3Bucket has not been set!');
+    }
+
+    const cloudForgeInstance = this;
+
+    return new Promise((resolve, reject) => {
+      const awsCredentials = {
+        accessKeyId: cloudForgeInstance.awsAccessKeyId,
+        secretAccessKey: cloudForgeInstance.awsSecretAccessKey,
+      };
+
+      const s3Uploader = s3Helper.createClient({
+        s3Options: awsCredentials,
+      }).uploadDir({
+        localDir: cloudForgeInstance.html.buildDirectory,
+        deleteRemoved: true,
+        s3Params: {
+          Bucket: cloudForgeInstance.awsS3Bucket,
+          ACL: 'public-read',
+        },
+      });
+
+      s3Uploader.on('error', error => {
+        reject(error);
+      });
+
+      s3Uploader.on('end', () => {
+        cloudForgeLog('Deployed to S3 successfully!');
+
+        if (!cloudForgeInstance.awsCloudFrontDistributionId) {
+          return resolve();
+        }
+
+        cloudForgeLog('Creating CloudFront invalidation...');
+
+        aws.config = new aws.Config(awsCredentials);
+
+        const cloudFront = new aws.CloudFront();
+
+        cloudFront.createInvalidation({
+          DistributionId: cloudForgeInstance.awsCloudFrontDistributionId,
+          InvalidationBatch: {
+            CallerReference: Date.now().toString(),
+            Paths: {
+              Quantity: 1,
+              Items: [
+                '/*',
+              ],
+            },
+          },
+        }).promise().then(() => {
+          cloudForgeLog('Created CloudFront invalidation successfully!');
+          resolve();
+        }).catch(reject);
+      });
+    });
   }
 }
 
