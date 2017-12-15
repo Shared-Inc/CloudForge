@@ -161,8 +161,58 @@ In doT.js templating, all templates are surrounded by `{{ }}`. However, in Cloud
 
 To learn more about how to use templates, please see <a href="http://olado.github.io/doT/index.html">doT.js</a>.
 
-** Templates ** are an awesome part of CloudForge.
+**Tempalates** are an awesome part of CloudForge. Using a top level template.html.dot file in your HTML source directory, all child HTML files in all child directories will be loaded into this top level template where your specify `<{=it.content}>`
 
+Here's an example of a template.html.dot file's structure.
+
+```HTML
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0">
+
+    <title><{=it.metadata.title || ''}> | Fanapptic</title>
+
+    <link href="/css/app.css" rel="stylesheet" type="text/css" />
+    <link href="<{=it.fonts.importUrl}>" rel="stylesheet">
+
+    <script type="text/javascript" src="/dependencies/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="/dependencies/bootstrap-sass/assets/javascripts/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/dependencies/js-url/url.min.js"></script>
+    <script type="text/javascript" src="/javascript/API.js"></script>
+    <script type="text/javascript" src="/javascript/User.js"></script>
+    <script type="text/javascript" src="/javascript/UI.js"></script>
+  </head>
+  <body>
+    <div id="gateway">
+      <div class="container">
+        <div class="row">
+          <div class="col-xs-12 col-sm-push-3 col-sm-6 col-lg-push-4 col-lg-4 text-center">
+            <a href="/" class="logo"><img src="/images/logo.png" width="80%" /></a>
+            <h3 class="intro-message"><{=it.metadata.introMessage || ''}></h3>
+            <{=it.content || ''}>
+            <div class="sub-links">
+              <{? it.metadata.sublinks}>
+                <{~it.metadata.sublinks :value}>
+                  <a href="<{=value.url}>"><{=value.text}></a>
+                <{~}>
+              <{?}>
+              <a href="https://www.fanapptic.com">&copy; Fanapptic</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+```
+
+You can see `<{=it.content || ''}>` in the code snippet above. When CloudForge compiles your HTML, it will take the contents of child HTML files and set their contents to the value of `it.content`. The parent template.html.dot file then inserts it into itself to generate a compiled page.
+
+template.html.dot files are selected based on their distance away from an HTML file in your source directory's structure. Closer parent template.html.dot files are always used. See below for more info.
 
 ## HTML Directory Structure & metadata.json
 
