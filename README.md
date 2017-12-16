@@ -37,7 +37,11 @@ const cloudForge = new CloudForge({
   server: { // Required only if running develop()
     directory: './build',
     browser: 'Google Chrome',
-    port: 8282
+    port: 8282,
+    watchDirectories: [
+      './some/dir',
+      './another/dir'
+    ]
   },
   html: { // Required only if running build(), deploy() or compileHtml()
     sourceDirectory: './src/dir',
@@ -126,6 +130,7 @@ This is the configuration object used when running develop() to launch a test se
   * **directory**: `String` - The directory the server will serve content from.
   * **browser**: `String` - The name of the browser you want to launch for testing.
   * **port**: `String` - The port you want the server to use.
+  * **watchDirectories**: `Array` - An array of directories that when changes occur in, trigger a source rebuild and browser refresh. 
 
 ### html
   * Type: `Object`
