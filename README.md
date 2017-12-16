@@ -42,7 +42,7 @@ const cloudForge = new CloudForge({
   html: { // Required only if running build(), deploy() or compileHtml()
     sourceDirectory: './src/dir',
     buildDirectory: './build',
-    componentsPath: './components', 
+    componentsDirectory: './components', 
     componentDependencies: {
       a: { /* some object or instance available  */ },
       b: true,
