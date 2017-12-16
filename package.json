@@ -1,8 +1,8 @@
 {
   "name": "cloudforge",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "CloudForge is a super simple, lightweight HTML templating engine built on doT.js with reusable component support, build output minification and lightning fast Sass compilation. It also provides tools to quickly deploy your website to AWS' S3 and CloudFront.",
-  "main": "lib/CloudForge.js",
+  "main": "libs/CloudForge.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
