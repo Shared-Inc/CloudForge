@@ -43,7 +43,7 @@ const cloudForge = new CloudForge({
     sourceDirectory: './src/dir',
     buildDirectory: './build',
     componentsDirectory: './components', 
-    componentDependencies: {
+    templateDependencies: {
       a: { /* some object or instance available  */ },
       b: true,
       c: 'something'
