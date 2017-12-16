@@ -138,15 +138,17 @@ class CloudForge {
     }
 
     const recurse = directory => {
+      const directoryPath = path.normalize(directory.path);
+
       // Get template for current working directory, if any.
       directory.children.forEach(child => {
         if (child.extension === '.dot') {
-          templates[directory.path] = dot.template(fs.readFileSync(child.path).toString());
+          templates[directoryPath] = dot.template(fs.readFileSync(child.path).toString());
         }
       });
 
       // Select correct parent template.
-      let parentTemplateKey = directory.path;
+      let parentTemplateKey = directoryPath;
       let parentTemplate = null;
 
       while (!parentTemplate) {
@@ -166,7 +168,7 @@ class CloudForge {
           const sourceDirectory = path.normalize(this.html.sourceDirectory);
           const writePath = path.join(this.html.buildDirectory, child.path.replace(sourceDirectory, ''));
           const childTemplate = dot.template(fs.readFileSync(child.path));
-          const metadataPath = path.join(directory.path, 'metadata.json');
+          const metadataPath = path.join(directoryPath, 'metadata.json');
           const metadata = (fs.existsSync(metadataPath)) ? JSON.parse(fs.readFileSync(metadataPath).toString()) : {};
           const packagedComponents = Object.assign({
             components,
