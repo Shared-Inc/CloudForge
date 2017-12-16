@@ -163,7 +163,8 @@ class CloudForge {
       // Compile HTML files.
       directory.children.forEach(child => {
         if (child.extension === '.html') {
-          const writePath = path.join(this.html.buildDirectory, child.path.replace(this.html.sourceDirectory, ''));
+          const sourceDirectory = path.normalize(this.html.sourceDirectory);
+          const writePath = path.join(this.html.buildDirectory, child.path.replace(sourceDirectory, ''));
           const childTemplate = dot.template(fs.readFileSync(child.path));
           const metadataPath = path.join(directory.path, 'metadata.json');
           const metadata = (fs.existsSync(metadataPath)) ? JSON.parse(fs.readFileSync(metadataPath).toString()) : {};
@@ -223,7 +224,8 @@ class CloudForge {
       // Recurse & compile Sass files.
       directory.children.forEach(child => {
         if (child.name.charAt(0) !== '_' && (child.extension === '.sass' || child.extension === '.scss')) {
-          const writePath = path.join(this.sass.buildDirectory, child.path.replace(this.sass.sourceDirectory, '')).slice(0, -5) + '.css';
+          const sourceDirectoy = path.normalize(this.sass.sourceDirectory);
+          const writePath = path.join(this.sass.buildDirectory, child.path.replace(sourceDirectoy, '')).slice(0, -5) + '.css';
           const result = sass.renderSync({
             file: child.path,
             outFile: writePath.replace(this.sass.buildDirectory, ''),
