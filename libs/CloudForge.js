@@ -4,17 +4,18 @@
 
 const fs = require('fs');
 const path = require('path');
-
+const promisify = require('util.promisify');
 const aws = require('aws-sdk');
 const directoryTree = require('directory-tree');
 const dot = require('dot');
 const Joi = require('joi');
+const liveServer = require('live-server');
 const mkdirp = require('mkdirp');
 const ncp = promisify(require('ncp'));
-const promisify = require('util.promisify');
 const rimraf = promisify(require('rimraf'));
 const s3Helper = require('s3');
 const sass = require('node-sass');
+const watch = require('node-watch');
 
 /*
  * Set templating engine format
@@ -40,6 +41,12 @@ class CloudForge {
       awsSecretAccessKey: Joi.string().optional(),
       awsS3Bucket: Joi.string().optional(),
       awsCloudFrontDistributionId: Joi.string().optional(),
+      deployDirectory: Joi.string().optional(),
+      server: Joi.object({
+        directory: Joi.string().required(),
+        browser: Joi.string().required(),
+        port: Joi.number().required(),
+      }).optional(),
       html: Joi.object({
         sourceDirectory: Joi.string().required(),
         buildDirectory: Joi.string().required(),
@@ -88,17 +95,9 @@ class CloudForge {
 
     let promises = [];
 
-    promises.push(rimraf(this.html.buildDirectory));
-
-    if (this.sass) {
-      promises.push(rimraf(this.sass.buildDirectory));
-    }
-
-    if (this.dependencies) {
-      this.dependencies.forEach(instructions => {
-        promises.push(rimraf(instructions[1]));
-      });
-    }
+    this._getDirectories('build').forEach(directory => {
+      promises.push(rimraf(directory));
+    });
 
     return Promise.all(promises).then(() => {
       cloudForgeLog('Cleaned the build directories successfully!');
@@ -298,7 +297,7 @@ class CloudForge {
   /*
    * deploy()
    * --
-   * Runs built(), then uploads all contents
+   * Runs build(), then uploads all contents
    * of the build directories to the specified
    * S3 bucket specified with awsS3Bucket.
    * If awsCloudFrontDistributionId was provided,
@@ -315,59 +314,116 @@ class CloudForge {
       return Promise.reject('Could not deploy! The awsAccessKeyId, awsSecretAccessKey or awsS3Bucket has not been set!');
     }
 
-    const cloudForgeInstance = this;
+    this.build().then(() => {
+      return new Promise((resolve, reject) => {
+        const awsCredentials = {
+          accessKeyId: this.awsAccessKeyId,
+          secretAccessKey: this.awsSecretAccessKey,
+        };
 
-    return new Promise((resolve, reject) => {
-      const awsCredentials = {
-        accessKeyId: cloudForgeInstance.awsAccessKeyId,
-        secretAccessKey: cloudForgeInstance.awsSecretAccessKey,
-      };
-
-      const s3Uploader = s3Helper.createClient({
-        s3Options: awsCredentials,
-      }).uploadDir({
-        localDir: cloudForgeInstance.html.buildDirectory,
-        deleteRemoved: true,
-        s3Params: {
-          Bucket: cloudForgeInstance.awsS3Bucket,
-          ACL: 'public-read',
-        },
-      });
-
-      s3Uploader.on('error', error => {
-        reject(error);
-      });
-
-      s3Uploader.on('end', () => {
-        cloudForgeLog('Deployed to S3 successfully!');
-
-        if (!cloudForgeInstance.awsCloudFrontDistributionId) {
-          return resolve();
-        }
-
-        cloudForgeLog('Creating CloudFront invalidation...');
-
-        aws.config = new aws.Config(awsCredentials);
-
-        const cloudFront = new aws.CloudFront();
-
-        cloudFront.createInvalidation({
-          DistributionId: cloudForgeInstance.awsCloudFrontDistributionId,
-          InvalidationBatch: {
-            CallerReference: Date.now().toString(),
-            Paths: {
-              Quantity: 1,
-              Items: [
-                '/*',
-              ],
-            },
+        const s3Uploader = s3Helper.createClient({
+          s3Options: awsCredentials,
+        }).uploadDir({
+          localDir: this.deployDirectory,
+          deleteRemoved: true,
+          s3Params: {
+            Bucket: this.awsS3Bucket,
+            ACL: 'public-read',
           },
-        }).promise().then(() => {
-          cloudForgeLog('Created CloudFront invalidation successfully!');
-          resolve();
-        }).catch(reject);
+        });
+
+        s3Uploader.on('error', error => {
+          reject(error);
+        });
+
+        s3Uploader.on('end', () => {
+          cloudForgeLog('Deployed to S3 successfully!');
+
+          if (!this.awsCloudFrontDistributionId) {
+            return resolve();
+          }
+
+          cloudForgeLog('Creating CloudFront invalidation...');
+
+          aws.config = new aws.Config(awsCredentials);
+
+          const cloudFront = new aws.CloudFront();
+
+          cloudFront.createInvalidation({
+            DistributionId: this.awsCloudFrontDistributionId,
+            InvalidationBatch: {
+              CallerReference: Date.now().toString(),
+              Paths: {
+                Quantity: 1,
+                Items: [
+                  '/*',
+                ],
+              },
+            },
+          }).promise().then(() => {
+            cloudForgeLog('Created CloudFront invalidation successfully!');
+            resolve();
+          }).catch(reject);
+        });
       });
     });
+  }
+
+  /*
+   * develop()
+   * --
+   * Runs build(), then initializes a server running
+   * on localhost using the port specified in server.port.
+   * It then launches a browser window that loads
+   * the content the server is serving from the specified
+   * directory set in server.directory.
+   * --
+   * Returns nothing. Runs indefinitely until script termination.
+   */
+
+  develop() {
+    cloudForgeLog('Running serve...');
+
+    if (!this.server || !this.html) {
+      return Promise.reject('Could not serve! The develop or html property has not been set!');
+    }
+
+    this.build().then(() => {
+      watch(this._getDirectories('source'), { recursive: true }, () => {
+        this.build();
+      });
+
+      liveServer.start({
+        browser: this.server.browser,
+        host: 'localhost',
+        port: this.server.port,
+        root: this.server.directory,
+        wait: 1250,
+        ignore: '.git',
+      });
+    });
+  }
+
+  _getDirectories(type) {
+    let directories = [];
+
+    if (this.html) {
+      directories.push(this.html[`${type}Directory`]);
+    }
+
+    if (this.sass) {
+      directories.push(this.sass[`${type}Directory`]);
+    }
+
+    if (this.dependencies) {
+      const directoryIndex = (type === 'build') ? 1 : 0;
+
+      this.dependencies.forEach(instructions => {
+        directories.push(instructions[directoryIndex]);
+      });
+    }
+
+    return directories;
   }
 }
 
