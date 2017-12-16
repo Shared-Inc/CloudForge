@@ -33,7 +33,13 @@ const cloudForge = new CloudForge({
   awsSecretAccessKey: 'myawssecret', // Required if running deploy()
   awsS3Bucket: 'my-websites-bucket', // Required if running deploy()
   awsCloudFrontDistributionId: 'somedistributionid', // Required if running deploy()
-  html: { // Required only if running build, deploy or compileHtml()
+  deployDirectory: './build', // Required if running deploy()
+  server: { // Required only if running develop()
+    directory: './build',
+    browser: 'Google Chrome',
+    port: 8282
+  },
+  html: { // Required only if running build(), deploy() or compileHtml()
     sourceDirectory: './src/dir',
     buildDirectory: './build',
     componentsPath: './components', 
@@ -70,6 +76,10 @@ cloudForge.compileHtml(); // Maybe we just want out build directory to have comp
 
 cloudForge.compileSass(); // Want to just compile Sass? No problem!
 
+// OR
+
+cloudForge.develop(); // Automatically compile on code changes and launch an auto refreshing browser for testing.
+
 // See below for a full list of available methods.
 
 ```
@@ -100,6 +110,22 @@ This is the S3 bucket your build directories will be deployed to. Required only 
   * Default `null`
   
 The CloudFront distribution id you want to invalidate in the last step of deploying. Required only if deploying.
+
+### deployDirectory
+  * Type: `String`
+  * Default `null`
+  
+The root directory to deploy to S3. The directory specified and all of it's contents and children will be uploaded to the awsS3Bucket specified.
+
+### server
+  * Type: `Object`
+  * Default `{}`
+  
+This is the configuration object used when running develop() to launch a test server & browser. It is only required if you're using develop(). It accepts the following properties.
+
+  * **directory**: `String` - The directory the server will serve content from.
+  * **browser**: `String` - The name of the browser you want to launch for testing.
+  * **port**: `String` - The port you want the server to use.
 
 ### html
   * Type: `Object`
@@ -151,7 +177,7 @@ This copies files from the sourceDirectory to the buildDirectory of each array e
 
 ### deploy()
 
-This runs `clean()`, `compileHtml()`, `compileSass()`, `copyDependencies()` and then uploads the content of your build directories to the S3 bucket specified. It then creates a CloudFront invalidation if `awsCloudFrontDistributionId` was provided as a constructor option. 
+This runs `clean()`, `compileHtml()`, `compileSass()`, `copyDependencies()` and then uploads the content of your `deployDirectory` to the S3 bucket specified. It then creates a CloudFront invalidation if `awsCloudFrontDistributionId` was provided as a constructor option. 
 
 ## Using Templating & Templates
 
@@ -246,6 +272,14 @@ Also, as expected, all compiled sass output will have the extension `.css`.
 ## Deploying
 
 Deploying is extremely fast and easy. Create a CloudForge instance, making sure to include the `awsAccessKeyId`, `awsSecretAccessKey`, `awsS3Bucket` and optionally the `awsCloudFrontDistributionId` as options properties. Set your `html`, `sass` and/or `dependencies` properties as necessary for your use case. Then call the `deploy()` method of your cloudForge instance. Wallah! If all goes well, the contents in your build directories will be uploaded to S3. If you provided  `awsCloudFrontDistributionId`, all objects associated with that CloudFront distribution ID will be invalidated, and the latest ones in the attached S3 bucket will be cached by CloudFront.
+    
+## Developing
+
+Often times when building websites, you want to be able to quickly see your changes live in the browser. This is extremely easy to do with develop(). 
+
+The develop method will automatically watch for changes in any of your source or dependency directories specified in your CloudForge constructor options. Anytime it sees a change, it will automatically clean your build directories and recompile the most up to date version of your source directories to your build directories. 
+
+Additionally, develop() will launch the a test server on the port specified, and a browser specified with the server.browser parameter. The launched browser will then open the URL of your test server. Anytime your build directory gets updated, which happens anytime you make any changes to your source directory, this browser will automatically refresh the page with the latest changes to your code.
     
 ## Support
 
