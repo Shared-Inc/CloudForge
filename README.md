@@ -279,7 +279,7 @@ Often times when building websites, you want to be able to quickly see your chan
 
 The develop method will automatically watch for changes in any of your source or dependency directories specified in your CloudForge constructor options. Anytime it sees a change, it will automatically clean your build directories and recompile the most up to date version of your source directories to your build directories. 
 
-Additionally, develop() will launch the a test server on the port specified with the server.port parameter, and a browser specified with the server.browser parameter. The launched browser will then open the URL of your test server. Anytime your build directory gets updated, which happens anytime you make any changes to your source directory, this browser will automatically refresh the page with the latest changes to your code.
+Additionally, develop() will launch the a test server on the port specified with the server.port parameter, and a browser specified with the server.browser parameter. The launched browser will then open the URL of your test server. Anytime your build directory gets updated, which happens anytime you make any changes to your source directory, this browser will automatically refresh the browser with the latest changes to your code reflected.
     
 ## Support
 
