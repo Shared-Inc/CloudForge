@@ -46,6 +46,7 @@ class CloudForge {
         directory: Joi.string().required(),
         browser: Joi.string().required(),
         port: Joi.number().required(),
+        watchDirectories: Joi.array().items(Joi.string()).optional(),
       }).optional(),
       html: Joi.object({
         sourceDirectory: Joi.string().required(),
@@ -58,8 +59,8 @@ class CloudForge {
         buildDirectory: Joi.string().required(),
         includeSourceMap: Joi.boolean().optional(),
         outputStyle: Joi.string().valid('nested', 'expanded', 'compact', 'compressed').optional(),
-      }).optional(), // [ [sourceDirectory, buildDirectory] ]
-      dependencies: Joi.array().items(Joi.array().items(Joi.string()).min(2).max(2)).optional(), // [ [sourceDirectory, buildDirectory, includeMap] ]
+      }).optional(),
+      dependencies: Joi.array().items(Joi.array().items(Joi.string()).min(2).max(2)).optional(),
     }));
 
     Object.assign(this, options);
@@ -386,15 +387,31 @@ class CloudForge {
    */
 
   develop() {
-    cloudForgeLog('Running serve...');
+    cloudForgeLog('Starting server...');
 
     if (!this.server || !this.html) {
       return Promise.reject('Could not serve! The develop or html property has not been set!');
     }
 
     this.build().then(() => {
-      watch(this._getDirectories('source'), { recursive: true }, () => {
-        this.build();
+      let watchDirectories = this._getDirectories('source');
+
+      if (this.server.watchDirectories) {
+        watchDirectories = watchDirectories.concat(this.server.watchDirectories);
+      }
+
+      if (this.html.componentsDirectory) {
+        watchDirectories.push(this.html.componentsDirectory);
+      }
+
+      watch(watchDirectories, { recursive: true }, () => {
+        console.log('---');
+        cloudForgeLog('Changes found...');
+
+        this.build().then(() => {
+          cloudForgeLog('Refreshing browser!');
+          cloudForgeLog('Waiting for changes...');
+        });
       });
 
       liveServer.start({
@@ -405,6 +422,10 @@ class CloudForge {
         wait: 1250,
         ignore: '.git',
       });
+
+      liveServer.logLevel = 0;
+
+      cloudForgeLog('Server started. Waiting for changes...');
     });
   }
 
