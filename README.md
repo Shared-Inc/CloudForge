@@ -130,7 +130,7 @@ This is the configuration object used when running develop() to launch a test se
   * **directory**: `String` - The directory the server will serve content from.
   * **browser**: `String` - The name of the browser you want to launch for testing.
   * **port**: `String` - The port you want the server to use.
-  * **watchDirectories**: `Array` - An array of directories that when changes occur in, trigger a source rebuild and browser refresh. 
+  * **watchDirectories**: `Array` - An array of additional directories that when changes occur in, trigger a source rebuild and browser refresh. By default, any html, sass or other source directory changes will trigger a rebuild - you don't need to include those directories here.
 
 ### html
   * Type: `Object`
