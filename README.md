@@ -74,7 +74,7 @@ cloudForge.deploy().then(() => { // All CloudForge methods return promises.
 
 // OR
 
-cloudForge.compileHtml(); // Maybe we just want out build directory to have compiled HTML for debugging and nothing else.
+cloudForge.compileHtml(); // Maybe we just want our build directory to have compiled HTML for debugging and nothing else.
 
 // OR
 
