@@ -267,6 +267,8 @@ Because of the nature of web page navigation for websites hosted on S3 buckets, 
     └── ...
     
 For each directory containing an index.html file, you can also include a metadata.json file. This file is a JSON object with properties you specify. These properties are available through templating in template.html.dot files, and index.html files by using `<{ it.metadata }>`. To learn more about templating syntax please see the section above called "**Using Templating & Templates**".
+
+**NOTE:** As of right now, you **MUST** have at least a top level template.html.dot file at the root of your HTML source directory.
     
 ## Sass
 
