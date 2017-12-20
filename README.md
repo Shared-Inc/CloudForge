@@ -166,7 +166,7 @@ Additionally, for the optional third parameter, you can use it to do SED style r
 
 An example of using the third parameter may look like
 
-```javascript
+```
 // ... rest of options object properties ...
 dependencies: [
   ['./src/javascript', './build/javascript', [
