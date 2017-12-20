@@ -61,7 +61,9 @@ const cloudForge = new CloudForge({
   }
   dependencies: [ // Required only if running build(), deploy() or copyDependencies()
     ['./some/src/path', './some/build/path'],
-    ['../some/other/path', './to/this/path'],
+    ['../some/other/path', './to/this/path', [
+      ['replace all of these occurences in files at the build directory ./to/this/path', 'to this'] // optional SED style replacement
+    ]],
     // More sources to copy to destinations...
   ]
 });
@@ -158,7 +160,22 @@ This is the configuration object used when compiling your Sass. It is only requi
   * Type: `Array`
   * Default `[]`
   
-This is an array containing arrays of 2 strings each. Each array in this array instructs a source directory to copy into a destination (build) directory. The first string of these arrays is the source directory and the second is the destination directory. It is only required if you're using copyDependencies() or deploy().
+This is an array containing arrays of 2 strings each and an optional 3rd parameter that is an array. Each array in this array instructs a source directory to copy into a destination (build) directory. The first string of these arrays is the source directory and the second is the destination directory. It is only required if you're using copyDependencies() or deploy().
+
+Additionally, for the optional third parameter, you can use it to do SED style replacements on all occurrences of a term in all files copied into the specified build directory.
+
+An example of using the third parameter may look like
+
+```javascript
+// ... rest of options object properties ...
+dependencies: [
+  ['./src/javascript', './build/javascript', [
+    '<--API_URL-->', 'https://some-environment-specific-api-url.com'
+  ]],
+  ['./src/images, './build/images']
+]
+// ... more options object properties
+```
 
 ## CloudForge instance methods
 
