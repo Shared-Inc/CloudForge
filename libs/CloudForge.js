@@ -12,6 +12,7 @@ const Joi = require('joi');
 const liveServer = require('live-server');
 const mkdirp = require('mkdirp');
 const ncp = promisify(require('ncp'));
+const replace = require('replace');
 const rimraf = promisify(require('rimraf'));
 const s3Helper = require('s3');
 const sass = require('node-sass');
@@ -60,7 +61,7 @@ class CloudForge {
         includeSourceMap: Joi.boolean().optional(),
         outputStyle: Joi.string().valid('nested', 'expanded', 'compact', 'compressed').optional(),
       }).optional(),
-      dependencies: Joi.array().items(Joi.array().items(Joi.string()).min(2).max(2)).optional(),
+      dependencies: Joi.array().items(Joi.array().items(Joi.string(), Joi.array()).min(2).max(3)).optional(),
     }));
 
     Object.assign(this, options);
@@ -289,9 +290,25 @@ class CloudForge {
     this.dependencies.forEach(instructions => {
       const sourceDirectory = instructions[0];
       const buildDirectory = instructions[1];
+      const replacements = instructions[2];
 
       mkdirp.sync(path.dirname(buildDirectory));
-      promises.push(ncp(sourceDirectory, buildDirectory));
+
+      promises.push(ncp(sourceDirectory, buildDirectory).then(() => {
+        if (!Array.isArray(replacements)) {
+          return;
+        }
+
+        replacements.forEach(replacement => {
+          replace({
+            regex: replacement[0],
+            replacement: replacement[1],
+            paths: [buildDirectory],
+            recursive: true,
+            silent: true,
+          });
+        });
+      }));
     });
 
     return Promise.all(promises).then(() => {

@@ -44,6 +44,7 @@
     "ncp": "^2.0.0",
     "node-sass": "^4.7.2",
     "node-watch": "^0.5.5",
+    "replace": "^0.3.0",
     "rimraf": "^2.6.2",
     "s3": "^4.4.0",
     "util.promisify": "^1.0.0"
