@@ -40,6 +40,7 @@ class CloudForge {
     Joi.assert(options, Joi.object({
       awsAccessKeyId: Joi.string().optional(),
       awsSecretAccessKey: Joi.string().optional(),
+      awsRegion: Joi.string().optional(),
       awsS3Bucket: Joi.string().optional(),
       awsCloudFrontDistributionId: Joi.string().optional(),
       deployDirectory: Joi.string().optional(),
@@ -332,8 +333,8 @@ class CloudForge {
   deploy() {
     cloudForgeLog('Deploying to S3...');
 
-    if (!this.awsAccessKeyId || !this.awsSecretAccessKey || !this.awsS3Bucket) {
-      return Promise.reject('Could not deploy! The awsAccessKeyId, awsSecretAccessKey or awsS3Bucket has not been set!');
+    if (!this.awsAccessKeyId || !this.awsSecretAccessKey || !this.awsRegion || !this.awsS3Bucket) {
+      return Promise.reject('Could not deploy! The awsAccessKeyId, awsSecretAccessKey, awsRegion or awsS3Bucket has not been set!');
     }
 
     this.build().then(() => {
@@ -341,6 +342,7 @@ class CloudForge {
         const awsCredentials = {
           accessKeyId: this.awsAccessKeyId,
           secretAccessKey: this.awsSecretAccessKey,
+          region: this.awsRegion,
         };
 
         const s3Uploader = s3Helper.createClient({

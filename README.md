@@ -31,6 +31,7 @@ const CloudForge = require('cloudforge');
 const cloudForge = new CloudForge({
   awsAccessKeyId: 'myawskey', // Required if running deploy()
   awsSecretAccessKey: 'myawssecret', // Required if running deploy()
+  awsRegion: 'us-west-2', // Required if running deploy()
   awsS3Bucket: 'my-websites-bucket', // Required if running deploy()
   awsCloudFrontDistributionId: 'somedistributionid', // Required if running deploy()
   deployDirectory: './build', // Required if running deploy()
@@ -46,7 +47,7 @@ const cloudForge = new CloudForge({
   html: { // Required only if running build(), deploy() or compileHtml()
     sourceDirectory: './src/dir',
     buildDirectory: './build',
-    componentsDirectory: './components', 
+    componentsDirectory: './components',
     templateDependencies: {
       a: { /* some object or instance available  */ },
       b: true,
@@ -102,8 +103,14 @@ Required only for authentication if deploying to S3 / invalidating objects of a 
 ### awsSecretAccessKey
   * Type: `String`
   * Default: `null`
- 
+
 Required only for authentication if deploying to S3 / invalidating a objects of a CloudFront distribution.
+
+### awsRegion
+  * Type: `String`
+  * Default: `null`
+
+This is the region that your S3 bucket lives in. Required only if deploying.
 
 ### awsS3Bucket
   * Type: `String`
@@ -114,19 +121,19 @@ This is the S3 bucket your build directories will be deployed to. Required only 
 ### awsCloudFrontDistributionId
   * Type: `String`
   * Default `null`
-  
+
 The CloudFront distribution id you want to invalidate in the last step of deploying. Required only if deploying.
 
 ### deployDirectory
   * Type: `String`
   * Default `null`
-  
+
 The root directory to deploy to S3. The directory specified and all of it's contents and children will be uploaded to the awsS3Bucket specified.
 
 ### server
   * Type: `Object`
   * Default `{}`
-  
+
 This is the configuration object used when running develop() to launch a test server & browser. It is only required if you're using develop(). It accepts the following properties.
 
   * **directory**: `String` - The directory the server will serve content from.
@@ -137,29 +144,29 @@ This is the configuration object used when running develop() to launch a test se
 ### html
   * Type: `Object`
   * Default `{}`
-  
+
 This is the configuration object used when compiling your HTML. It is only required if you're using compileHtml() or deploy(). It accepts the following properties.
 
   * **sourceDirectory**: `String` - The path to the root directory containing all of your HTML source files.
   * **buildDirectory**: `String` - The path compiled HTML files will be written to. It's structure will match that of your src directory.
   * **componentsDirectory**: `String` - The path to the directory containing your component files.
   * **templateDependencies**: `Object` - An object containing any properties and values that you want made available to all templates, renderable HTML files and components.
-  
+
 ### sass
   * Type: `Object`
   * Default `{}`
-  
+
 This is the configuration object used when compiling your Sass. It is only required if you're using compileSass() or deploy(). It accepts the following properties.
 
-  * **sourceDirectory**: `String` - The path to the root directory containing all of your Sass 
+  * **sourceDirectory**: `String` - The path to the root directory containing all of your Sass
   * **buildDirectory**: `String` - The path compiled css files will be written to. It's structure will match that of your sourceDirectory.
   * **includeSourceMap**: `Boolean` - Set to `true` if you want source maps to be generated with your css files. Defaults to `false`.
   * **outputStyle**: `String` - Set to one of the available Sass output styles: `nested`, `expanded`, `compact`, `compressed`. You can <a href="https://web-design-weekly.com/2014/06/15/different-sass-output-styles/" target="_blank">learn more here</a>.
-  
+
 ### dependencies
   * Type: `Array`
   * Default `[]`
-  
+
 This is an array containing arrays of 2 strings each and an optional 3rd parameter that is an array. Each array in this array instructs a source directory to copy into a destination (build) directory. The first string of these arrays is the source directory and the second is the destination directory. It is only required if you're using copyDependencies() or deploy().
 
 Additionally, for the optional third parameter, you can use it to do SED style replacements on all occurrences of a term in all files copied into the specified build directory.
@@ -199,7 +206,7 @@ This copies files from the sourceDirectory to the buildDirectory of each array e
 
 ### deploy()
 
-This runs `clean()`, `compileHtml()`, `compileSass()`, `copyDependencies()` and then uploads the content of your `deployDirectory` to the S3 bucket specified. It then creates a CloudFront invalidation if `awsCloudFrontDistributionId` was provided as a constructor option. 
+This runs `clean()`, `compileHtml()`, `compileSass()`, `copyDependencies()` and then uploads the content of your `deployDirectory` to the S3 bucket specified. It then creates a CloudFront invalidation if `awsCloudFrontDistributionId` was provided as a constructor option.
 
 ## Using Templating & Templates
 
@@ -282,29 +289,29 @@ Because of the nature of web page navigation for websites hosted on S3 buckets, 
     │   └── template.html.dot     # This template will be used by all index.html files at this directory level and children.
     ├── index.html                # Top level landing page
     ├── metadata.json
-    ├── template.html.dot         # This is the template all index.html files will be rendered in and unless another template.html.dot file is encountered in a child directory - in which case, index.html file in that directory and children directory will use the deeper template.html.dot file. 
+    ├── template.html.dot         # This is the template all index.html files will be rendered in and unless another template.html.dot file is encountered in a child directory - in which case, index.html file in that directory and children directory will use the deeper template.html.dot file.
     └── ...
-    
+
 For each directory containing an index.html file, you can also include a metadata.json file. This file is a JSON object with properties you specify. These properties are available through templating in template.html.dot files, and index.html files by using `<{ it.metadata }>`. To learn more about templating syntax please see the section above called "**Using Templating & Templates**".
-    
+
 ## Sass
 
 There are no unusual conventions associated with CloudForge and Sass. Also note, as expected - CloudForge will only render .scss and .sass files that **do not** begin with `_`. For example `_theme.scss` would **not** be rendered in the build directory at all.
 
 Also, as expected, all compiled sass output will have the extension `.css`.
-    
+
 ## Deploying
 
-Deploying is extremely fast and easy. Create a CloudForge instance, making sure to include the `awsAccessKeyId`, `awsSecretAccessKey`, `awsS3Bucket` and optionally the `awsCloudFrontDistributionId` as options properties. Set your `html`, `sass` and/or `dependencies` properties as necessary for your use case. Then call the `deploy()` method of your cloudForge instance. Wallah! If all goes well, the contents in your build directories will be uploaded to S3. If you provided  `awsCloudFrontDistributionId`, all objects associated with that CloudFront distribution ID will be invalidated, and the latest ones in the attached S3 bucket will be cached by CloudFront.
-    
+Deploying is extremely fast and easy. Create a CloudForge instance, making sure to include the `awsAccessKeyId`, `awsSecretAccessKey`, `awsRegion`, `awsS3Bucket` and optionally the `awsCloudFrontDistributionId` as options properties. Set your `html`, `sass` and/or `dependencies` properties as necessary for your use case. Then call the `deploy()` method of your cloudForge instance. Wallah! If all goes well, the contents in your build directories will be uploaded to S3. If you provided  `awsCloudFrontDistributionId`, all objects associated with that CloudFront distribution ID will be invalidated, and the latest ones in the attached S3 bucket will be cached by CloudFront.
+
 ## Developing
 
-Often times when building websites, you want to be able to quickly see your changes live in the browser. This is extremely easy to do with develop(). 
+Often times when building websites, you want to be able to quickly see your changes live in the browser. This is extremely easy to do with develop().
 
-The develop method will automatically watch for changes in any of your source or dependency directories specified in your CloudForge constructor options. Anytime it sees a change, it will automatically clean your build directories and recompile the most up to date version of your source directories to your build directories. 
+The develop method will automatically watch for changes in any of your source or dependency directories specified in your CloudForge constructor options. Anytime it sees a change, it will automatically clean your build directories and recompile the most up to date version of your source directories to your build directories.
 
 Additionally, develop() will launch the a test server on the port specified with the server.port parameter, and a browser specified with the server.browser parameter. The launched browser will then open the URL of your test server. Anytime your build directory gets updated, which happens anytime you make any changes to your source directory, this browser will automatically refresh the browser with the latest changes to your code reflected.
-    
+
 ## Support
 
 If you have any issues, feature requests or complaints, please <a href="https://github.com/Fanapptic/cloudforge/issues/new">open a new issue</a>. We'll do our best to quickly respond.
