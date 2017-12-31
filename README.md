@@ -163,6 +163,12 @@ This is the configuration object used when compiling your Sass. It is only requi
   * **includeSourceMap**: `Boolean` - Set to `true` if you want source maps to be generated with your css files. Defaults to `false`.
   * **outputStyle**: `String` - Set to one of the available Sass output styles: `nested`, `expanded`, `compact`, `compressed`. You can <a href="https://web-design-weekly.com/2014/06/15/different-sass-output-styles/" target="_blank">learn more here</a>.
 
+### cleanIgnoreDirectories
+  * Type: `Array`
+  * Default `[]`
+
+This is an array containing directory names that you want the clean process to ignore. This is optional.
+
 ### dependencies
   * Type: `Array`
   * Default `[]`
