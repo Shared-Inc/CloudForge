@@ -62,6 +62,7 @@ class CloudForge {
         includeSourceMap: Joi.boolean().optional(),
         outputStyle: Joi.string().valid('nested', 'expanded', 'compact', 'compressed').optional(),
       }).optional(),
+      cleanIgnoreDirectories: Joi.array().items(Joi.string()).optional(),
       dependencies: Joi.array().items(Joi.array().items(Joi.string(), Joi.array()).min(2).max(3)).optional(),
     }));
 
@@ -99,7 +100,9 @@ class CloudForge {
     let promises = [];
 
     this._getDirectories('build').forEach(directory => {
-      promises.push(rimraf(directory));
+      if (this.cleanIgnoreDirectories && !this.cleanIgnoreDirectories.includes(directory)) {
+        promises.push(rimraf(directory));
+      }
     });
 
     return Promise.all(promises).then(() => {
