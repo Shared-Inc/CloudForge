@@ -38,12 +38,12 @@ dot.templateSettings['strip'] = false;
 class CloudForge {
   constructor(options) {
     Joi.assert(options, Joi.object({
-      awsAccessKeyId: Joi.string().optional(),
-      awsSecretAccessKey: Joi.string().optional(),
-      awsRegion: Joi.string().optional(),
-      awsS3Bucket: Joi.string().optional(),
-      awsCloudFrontDistributionId: Joi.string().optional(),
-      deployDirectory: Joi.string().optional(),
+      awsAccessKeyId: Joi.string().allow('').optional(),
+      awsSecretAccessKey: Joi.string().allow('').optional(),
+      awsRegion: Joi.string().allow('').optional(),
+      awsS3Bucket: Joi.string().allow('').optional(),
+      awsCloudFrontDistributionId: Joi.string().allow('').optional(),
+      deployDirectory: Joi.string().allow('').optional(),
       server: Joi.object({
         directory: Joi.string().required(),
         browser: Joi.string().required(),
@@ -53,7 +53,7 @@ class CloudForge {
       html: Joi.object({
         sourceDirectory: Joi.string().required(),
         buildDirectory: Joi.string().required(),
-        componentsDirectory: Joi.string().optional(),
+        componentsDirectory: Joi.string().allow('').optional(),
         templateDependencies: Joi.object().optional(),
       }).optional(),
       sass: Joi.object({
