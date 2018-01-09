@@ -35,10 +35,10 @@
   },
   "homepage": "https://github.com/Fanapptic/cloudforge#readme",
   "dependencies": {
-    "aws-sdk": "^2.169.0",
+    "aws-sdk": "^2.178.0",
     "directory-tree": "^2.0.0",
     "dot": "^1.1.2",
-    "joi": "^13.0.2",
+    "joi": "^13.1.0",
     "live-server": "^1.2.0",
     "mkdirp": "^0.5.1",
     "ncp": "^2.0.0",
