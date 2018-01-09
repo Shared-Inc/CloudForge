@@ -100,7 +100,7 @@ class CloudForge {
     let promises = [];
 
     this._getDirectories('build').forEach(directory => {
-      if (this.cleanIgnoreDirectories && !this.cleanIgnoreDirectories.includes(directory)) {
+      if (!this.cleanIgnoreDirectories || !this.cleanIgnoreDirectories.includes(directory)) {
         promises.push(rimraf(directory));
       }
     });
