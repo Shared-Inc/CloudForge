@@ -83,12 +83,12 @@ class CloudForge {
   build() {
     cloudForgeLog('Building...');
 
+    this.copyDependencies();
+
     return this.clean().then(() => {
       return this.compileHtml();
     }).then(() => {
       return this.compileSass();
-    }).then(() => {
-      return this.copyDependencies();
     }).then(() => {
       cloudForgeLog('Built successfully!');
     });
