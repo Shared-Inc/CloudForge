@@ -88,7 +88,8 @@ class CloudForge {
     }).then(() => {
       return this.compileSass();
     }).then(() => {
-      this.copyDependencies();
+      return this.copyDependencies();
+    }).then(() => {
       cloudForgeLog('Built successfully!');
     });
   }
