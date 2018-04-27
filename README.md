@@ -148,6 +148,7 @@ This is the configuration object used when compiling your HTML. It is only requi
 
   * **sourceDirectory**: `String` - The path to the root directory containing all of your HTML source files.
   * **buildDirectory**: `String` - The path compiled HTML files will be written to. It's structure will match that of your src directory.
+  * **copyFilesWithExtensions**: `String` - An array of extensions to match files in the source directory to copy into the build directory. Such as `['.js', '.png']`.
   * **templateDependencies**: `Object` - An object containing any properties and values that you want made available to all templates, renderable HTML files.
 
 ### sass

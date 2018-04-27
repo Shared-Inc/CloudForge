@@ -53,6 +53,7 @@ class CloudForge {
       html: Joi.object({
         sourceDirectory: Joi.string().required(),
         buildDirectory: Joi.string().required(),
+        copyFilesWithExtensions: Joi.array().items(Joi.string()).optional(),
         componentsDirectory: Joi.string().allow('').optional(),
         templateDependencies: Joi.object().optional(),
       }).optional(),
@@ -157,25 +158,31 @@ class CloudForge {
 
       // Compile HTML files.
       directory.children.forEach(child => {
-        if (child.extension === '.html') {
-          const sourceDirectory = path.normalize(this.html.sourceDirectory);
-          const writePath = path.join(this.html.buildDirectory, child.path.replace(sourceDirectory, ''));
-          const childTemplate = dot.template(fs.readFileSync(child.path));
-          const metadataPath = path.join(directoryPath, 'metadata.json');
-          const metadata = (fs.existsSync(metadataPath)) ? JSON.parse(fs.readFileSync(metadataPath).toString()) : {};
-          const templateDependencies = Object.assign({
-            metadata,
-            getComponent,
-          }, this.html.templateDependencies);
+        const sourceDirectory = path.normalize(this.html.sourceDirectory);
+        const writePath = path.join(this.html.buildDirectory, child.path.replace(sourceDirectory, ''));
 
-          mkdirp.sync(path.dirname(writePath));
+        if (child.type !== 'directory') {
+          if (child.extension === '.html') {
+            const childTemplate = dot.template(fs.readFileSync(child.path));
+            const metadataPath = path.join(directoryPath, 'metadata.json');
+            const metadata = (fs.existsSync(metadataPath)) ? JSON.parse(fs.readFileSync(metadataPath).toString()) : {};
+            const templateDependencies = Object.assign({
+              metadata,
+              getComponent,
+            }, this.html.templateDependencies);
 
-          fs.writeFileSync(writePath, parentTemplate(Object.assign({
-            content: childTemplate(templateDependencies),
-          }, templateDependencies)));
-        }
+            mkdirp.sync(path.dirname(writePath));
 
-        if (child.type === 'directory') {
+            fs.writeFileSync(writePath, parentTemplate(Object.assign({
+              content: childTemplate(templateDependencies),
+            }, templateDependencies)));
+          }
+
+          if (this.html.copyFilesWithExtensions && this.html.copyFilesWithExtensions.includes(child.extension)) {
+            mkdirp.sync(path.dirname(writePath));
+            fs.writeFileSync(writePath, fs.readFileSync(child.path));
+          }
+        } else {
           recurse(child);
         }
       });
