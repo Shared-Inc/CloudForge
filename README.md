@@ -47,7 +47,6 @@ const cloudForge = new CloudForge({
   html: { // Required only if running build(), deploy() or compileHtml()
     sourceDirectory: './src/dir',
     buildDirectory: './build',
-    componentsDirectory: './components',
     templateDependencies: {
       a: { /* some object or instance available  */ },
       b: true,
@@ -149,8 +148,7 @@ This is the configuration object used when compiling your HTML. It is only requi
 
   * **sourceDirectory**: `String` - The path to the root directory containing all of your HTML source files.
   * **buildDirectory**: `String` - The path compiled HTML files will be written to. It's structure will match that of your src directory.
-  * **componentsDirectory**: `String` - The path to the directory containing your component files.
-  * **templateDependencies**: `Object` - An object containing any properties and values that you want made available to all templates, renderable HTML files and components.
+  * **templateDependencies**: `Object` - An object containing any properties and values that you want made available to all templates, renderable HTML files.
 
 ### sass
   * Type: `Object`
@@ -276,6 +274,33 @@ You can see `<{=it.content || ''}>` in the code snippet above. When CloudForge c
 template.html.dot files are selected based on their distance away from an HTML file in your source directory's structure. Closer parent template.html.dot files are always used. See below for more info.
 
 **NOTE:** As of right now, you **MUST** have at least a top level template.html.dot file at the root of your HTML source directory.
+
+## Including Components
+
+Cloudforge exposes the getComponent() method within all rendered html & component files. This allows infinite levels of component nesting and reusability while maintaining flexibility with how you structure your project. getComponent() is accessible from the `it` context within a component or template file.
+
+getComponent() accepts the following arguments.
+
+### path
+  * Type: `String`
+  * Default: `Null`
+
+The path relative to root where the component you want to include is located. This path should include the component's full file name.
+
+### object
+  * Type: `Object`
+  * Default: `{}`
+
+The object you want to include and make available at the component level. It's properties will be accessible from the `it` context within the component file.
+
+### Usage Example
+
+```
+<{=it.getComponent('src/components/card.html.dot', {
+  title: 'Example property',
+  url: 'https://example.com/'
+})}>
+```
 
 ## HTML Directory Structure & metadata.json
 

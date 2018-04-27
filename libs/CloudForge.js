@@ -129,26 +129,13 @@ class CloudForge {
     }
 
     let templates = {};
-    let components = {};
-
-    // Get components
-    if (this.html.componentsDirectory) {
-      fs.readdirSync(this.html.componentsDirectory).filter(directoryItem => {
-        return path.extname(directoryItem) === '.dot';
-      }).forEach(componentFile => {
-        const componentName = componentFile.split('.')[0];
-        const componentTemplate = fs.readFileSync(`${this.html.componentsDirectory}/${componentFile}`);
-
-        components[componentName] = dot.template(componentTemplate);
-      });
-    }
 
     const recurse = directory => {
       const directoryPath = path.normalize(directory.path);
 
       // Get template for current working directory, if any.
       directory.children.forEach(child => {
-        if (child.extension === '.dot') {
+        if (child.name === 'template.html.dot') {
           templates[directoryPath] = dot.template(fs.readFileSync(child.path).toString());
         }
       });
@@ -176,16 +163,16 @@ class CloudForge {
           const childTemplate = dot.template(fs.readFileSync(child.path));
           const metadataPath = path.join(directoryPath, 'metadata.json');
           const metadata = (fs.existsSync(metadataPath)) ? JSON.parse(fs.readFileSync(metadataPath).toString()) : {};
-          const packagedComponents = Object.assign({
-            components,
+          const templateDependencies = Object.assign({
             metadata,
+            getComponent,
           }, this.html.templateDependencies);
 
           mkdirp.sync(path.dirname(writePath));
 
           fs.writeFileSync(writePath, parentTemplate(Object.assign({
-            content: childTemplate(packagedComponents),
-          }, packagedComponents)));
+            content: childTemplate(templateDependencies),
+          }, templateDependencies)));
         }
 
         if (child.type === 'directory') {
@@ -480,6 +467,14 @@ class CloudForge {
 
 function cloudForgeLog(message) {
   console.log(`CloudForge: ${message}`);
+}
+
+function getComponent(path, object) {
+  const template = dot.template(fs.readFileSync(path).toString());
+
+  object = object || {};
+
+  return template(Object.assign(object, { getComponent }));
 }
 
 /*
