@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Fanapptic/cloudforge.git"
+    "url": "git+https://github.com/Shared-Inc/CloudForge.git"
   },
   "keywords": [
     "templates",
@@ -31,9 +31,9 @@
   "author": "Braydon Batungbacal <braydon@fanapptic.com>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Fanapptic/cloudforge/issues"
+    "url": "https://github.com/Shared-Inc/CloudForge/issues"
   },
-  "homepage": "https://github.com/Fanapptic/cloudforge#readme",
+  "homepage": "https://github.com/Shared-Inc/CloudForge#readme",
   "dependencies": {
     "aws-sdk": "^2.178.0",
     "directory-tree": "^2.0.0",
